@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_PropertySheetDisplayName>opencvd</_PropertySheetDisplayName>
+    <IncludePath>D:\Program Files\opencv\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>\f$(OPENCV_DIR)\..\..\include;D:\Program Files\opencv\install\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>D:\Program Files\opencv\install\x86\vc14\bin;D:\Program Files\opencv\install\x86\vc14\lib;$(OPENCV_DIR)\bin;$(OPENCV_DIR)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_core320d.lib;opencv_calib3d320d.lib;opencv_highgui320d.lib;opencv_imgproc320d.lib;opencv_imgcodecs320d.lib;opencv_features2d320d.lib;opencv_xfeatures2d320d.lib;opencv_flann320d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
