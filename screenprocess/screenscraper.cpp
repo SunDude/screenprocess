@@ -82,6 +82,8 @@ void screenscraper::setroi(RECT windim) {
 	offx += windim.left;
 	offy += windim.top;
 	cv::Rect crop(max(0, windim.left), max(0, windim.top), min(screen.cols - windim.left, windim.right - windim.left), min(screen.rows - windim.top, windim.bottom - windim.top));
+	// std::cout << "crop dimension (x, y, width, height): " << crop.x << ", " << crop.y << ", " << crop.width << ", " << crop.height << std::endl;
+
 	while (roi.data) roi.release();
 	roi = screen(crop);
 }

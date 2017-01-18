@@ -174,19 +174,22 @@ cv::Point findtempl(cv::Mat scene, cv::Mat templ, double threshold = 0.85f) {
 	}
 }
 
+int hourstorun=0;
+
 void debugtest() {
 	// http://docs.opencv.org/2.4/doc/tutorials/imgproc/histograms/template_matching/template_matching.html
 	// matches closest, but does not give measurment of similarity?
 
-	cv::Mat data[5];
+	cv::Mat data[6];
 	data[0] = cv::imread("resource\\freechest.png", CV_LOAD_IMAGE_COLOR);
 	data[1] = cv::imread("resource\\taptounlock.png", CV_LOAD_IMAGE_COLOR);
 	data[2] = cv::imread("resource\\startunlock.png", CV_LOAD_IMAGE_COLOR);
 	data[3] = cv::imread("resource\\freeclick2.png", CV_LOAD_IMAGE_COLOR);
-	for (int i = 0; i < 4; i++) {
+	data[4] = cv::imread("resource\\dc.png", CV_LOAD_IMAGE_COLOR);
+	for (int i = 0; i < 5; i++) {
 		if (data[i].empty()) continue;
-		cvtColor(data[i], data[4], CV_RGB2RGBA);
-		data[i] = data[4];
+		cvtColor(data[i], data[5], CV_RGB2RGBA);
+		data[i] = data[5];
 	}
 	
 
@@ -197,12 +200,21 @@ void debugtest() {
 		if (FIN) break;
 		// refresh captured image
 		scraper.getscreenmat();
-		RECT windim;
+		RECT windim, areaofinterest;
 		if (!GetWindowRect(curhwnd, &windim)) return; // hwnd lost
-		windim.left += ((windim.right - windim.left) * 4) / 12;
-		windim.right -= ((windim.right - windim.left) * 5) / 12;
-		scraper.setroi(windim);
-		if (!GetWindowRect(curhwnd, &windim)) return; // hwnd lost
+		areaofinterest = windim;
+		areaofinterest.left += ((windim.right - windim.left) * 4.0f) / 12.0f;
+		areaofinterest.right -= ((windim.right - windim.left) * 3.5f) / 12.0f;
+
+		// std::cout << "windows dimension (left, top, right, bottom): " << windim.left << ", " << windim.top << ", " << windim.right << ", " << windim.bottom << std::endl;
+		
+		if (areaofinterest.left >= areaofinterest.right) {
+			std::cout << "windim left/right crossed" << std::endl;
+		}
+		if (areaofinterest.left >= windim.right || areaofinterest.right <= windim.left) {
+			std::cout << "windim left/right crossed" << std::endl;
+		}
+		scraper.setroi(areaofinterest);
 
 		cv::Point freechestloc = findtempl(scraper.roi, data[0]);
 		Sleep(200);
@@ -211,6 +223,8 @@ void debugtest() {
 		cv::Point startunlockloc = findtempl(scraper.roi, data[2]);
 		Sleep(200);
 		cv::Point clickthisloc = findtempl(scraper.roi, data[3], 0.7f);
+		Sleep(200);
+		cv::Point dc = findtempl(scraper.roi, data[4]);
 		Sleep(200);
 		
 		if (DEBUG) {
@@ -222,7 +236,22 @@ void debugtest() {
 
 		cv::Point notfound(-1, -1);
 
-		if (startunlockloc != notfound) {
+		clock_t haveran = clock();
+		int hoursran = haveran / CLOCKS_PER_SEC / 60 / 60;
+		// std::cout << "have ran for seconds: " << haveran / CLOCKS_PER_SEC << std::endl;
+
+		if (dc != notfound) {
+			if (hoursran >= hourstorun) {
+				flag = false;
+				std::cout << "disconnected, puasing..." << std::endl;
+				continue;
+			}
+			else {
+				mouse.generateclick(windim.left + 1045, windim.top + 45, 10, 10);
+				std::cout << "reconnecting..." << std::endl;
+			}
+		}
+		else if (startunlockloc != notfound) {
 			mouse.generateclick(startunlockloc.x + scraper.offx, startunlockloc.y + scraper.offy, data[2].cols, data[2].rows);
 			std::cout << "start chest unlock" << std::endl;
 		}
@@ -235,7 +264,7 @@ void debugtest() {
 			std::cout << "free chest ready to collect" << std::endl;
 		}
 		else if (clickthisloc != notfound) {
-			mouse.generateclick(clickthisloc.x + scraper.offx, clickthisloc.y + scraper.offy, data[3].cols, data[3].rows);
+			// mouse.generateclick(clickthisloc.x + scraper.offx, clickthisloc.y + scraper.offy, data[3].cols, data[3].rows);
 			std::cout << "waiting for 5 seconds..." << std::endl;
 			Sleep(4000);
 		}
@@ -251,10 +280,10 @@ void debugtest() {
 
 void loading() {
 	std::cout << std::endl << "Loading";
-	Sleep(250);
-	for (int i = 0; i < 10; i++) {
+	Sleep(150);
+	for (int i = 0; i < 5; i++) {
 		std::cout << ".";
-		Sleep(std::rand() % 250 + 250);
+		Sleep(std::rand() % 100 + 150);
 	}
 	std::cout << "done" << std::endl << std::endl;
 }
@@ -266,7 +295,7 @@ int main(int argc, char* argv[]) {
 	std::cout << "*****" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Please open bluestacks";
-	Sleep(2000);
+	Sleep(1000);
 	while ((curhwnd = FindWindow(NULL, "BlueStacks App Player")) == NULL) {
 		std::cout << ".";
 		Sleep(1000);
@@ -277,7 +306,10 @@ int main(int argc, char* argv[]) {
 	
 	loading();
 
-	if (DEBUG) cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);// Create a window for display.
+	std::cout << "Please enter number of hours to run with reconnect (or 0 for none): ";
+	std::cin >> hourstorun;
+
+	cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);// Create a window for display.
 	//cv::namedWindow("Keypoints 1", cv::WINDOW_AUTOSIZE);// Create a window for display.
 	//cv::namedWindow("Keypoints 2", cv::WINDOW_AUTOSIZE);// Create a window for display.
 	if (DEBUG) cv::namedWindow("Debug display", cv::WINDOW_AUTOSIZE);// Create a window for debug.
